@@ -77,10 +77,10 @@
     .badge-adult { background:rgba(16,185,129,0.2); color:#34d399; border:1px solid #10b981; }
     .badge-child { background:rgba(139,92,246,0.2); color:#c084fc; border:1px solid #8b5cf6; }
     .result-description { font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:12px; }
-    .score-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
+    .score-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; color:var(--text-secondary); }
+    .score-row strong { color:white; }
     .page-footer-line { text-align:center; padding:8px 0 16px; font-size:10px; color:var(--text-muted); }
     .page-footer-line a { color:#c084fc; text-decoration:none; font-weight:600; }
-    .description-section { margin-bottom:16px; }
   </style>
 </head>
 <body>
@@ -114,7 +114,7 @@
             <strong>Ребёнок</strong> — поведение, мысли и чувства из более раннего возраста. Спонтанность, эмоции, творчество или бунт.
           </p>
           <p class="block-text">
-            В роли руководителя мы неосознанно переключаемся между этими состояниями. Наш тест из 10 вопросов поможет определить, какое эго-состояние доминирует в вашем управленческом стиле.
+            В роли руководителя мы неосознанно переключаемся между этими состояниями. Мой тест из 10 вопросов поможет определить, какое эго-состояние доминирует в вашем управленческом стиле.
           </p>
         </div>
       </div>
@@ -124,7 +124,7 @@
       </div>
     </div>
 
-    <!-- Страница вопроса (динамическая) -->
+    <!-- Страница вопроса -->
     <div class="page" id="pageQuestion">
       <div class="block-card">
         <div class="progress" id="progressText">Вопрос 1 из 10</div>
@@ -142,6 +142,7 @@
         <div class="score-row" id="scoreParent"></div>
         <div class="score-row" id="scoreAdult"></div>
         <div class="score-row" id="scoreChild"></div>
+        <div style="margin-top:12px; font-size:12px; color:var(--text-muted);">Проценты отражают долю ответов, характерных для каждого эго-состояния.</div>
       </div>
       <button class="nav-btn primary" onclick="location.reload()" style="margin-top:12px;">Пройти заново</button>
       <div class="page-footer-line">
@@ -242,8 +243,7 @@
   ];
 
   let currentQuestion = 0;
-  let answers = new Array(questions.length).fill(null); // хранит type ('parent','adult','child')
-  let selectedOption = null;
+  let answers = new Array(questions.length).fill(null);
 
   function startTest() {
     currentQuestion = 0;
@@ -271,17 +271,14 @@
     optionsContainer.innerHTML = q.options.map((opt, idx) => `
       <button class="option-btn ${answers[currentQuestion] === opt.type ? 'selected' : ''}" onclick="selectOption('${opt.type}', this)">${opt.text}</button>
     `).join('');
-    selectedOption = answers[currentQuestion];
     updateNavButtons();
   }
 
   function selectOption(type, btn) {
     answers[currentQuestion] = type;
-    // Обновить выделение
     const container = document.getElementById('optionsContainer');
     container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
-    selectedOption = type;
   }
 
   function updateNavButtons() {
@@ -314,7 +311,6 @@
   function finishTest() {
     document.getElementById('bottomNav').style.display = 'none';
     showPage('result');
-    // Подсчет баллов
     let parentCount = 0, adultCount = 0, childCount = 0;
     answers.forEach(ans => {
       if (ans === 'parent') parentCount++;
@@ -322,17 +318,20 @@
       else if (ans === 'child') childCount++;
     });
 
-    // Определение доминирующего типа
+    const total = questions.length; // 10
+    const parentPct = Math.round((parentCount / total) * 100);
+    const adultPct = Math.round((adultCount / total) * 100);
+    const childPct = Math.round((childCount / total) * 100);
+
     let dominantType = '';
     const maxCount = Math.max(parentCount, adultCount, childCount);
-    if (maxCount === parentCount && maxCount === adultCount) dominantType = 'adult'; // при равенстве отдаем взрослому
+    if (maxCount === parentCount && maxCount === adultCount) dominantType = 'adult';
     else if (maxCount === parentCount && maxCount === childCount) dominantType = 'adult';
     else if (maxCount === adultCount && maxCount === childCount) dominantType = 'adult';
     else if (maxCount === parentCount) dominantType = 'parent';
     else if (maxCount === adultCount) dominantType = 'adult';
     else if (maxCount === childCount) dominantType = 'child';
 
-    // Отображение результата
     const titles = {
       parent: 'Вы — Руководитель-Родитель',
       adult: 'Вы — Руководитель-Взрослый',
@@ -348,12 +347,13 @@
       adult: 'badge-adult',
       child: 'badge-child'
     };
+
     document.getElementById('resultTitle').textContent = titles[dominantType];
     document.getElementById('resultBadge').innerHTML = `<span class="result-badge ${badgeClasses[dominantType]}">${dominantType === 'parent' ? 'Родитель' : dominantType === 'adult' ? 'Взрослый' : 'Ребёнок'}</span>`;
     document.getElementById('resultDescription').textContent = descriptions[dominantType];
-    document.getElementById('scoreParent').innerHTML = `<span style="color:#fbbf24;">Родитель:</span> <strong>${parentCount}</strong> из 10`;
-    document.getElementById('scoreAdult').innerHTML = `<span style="color:#34d399;">Взрослый:</span> <strong>${adultCount}</strong> из 10`;
-    document.getElementById('scoreChild').innerHTML = `<span style="color:#c084fc;">Ребёнок:</span> <strong>${childCount}</strong> из 10`;
+    document.getElementById('scoreParent').innerHTML = `<span style="color:#fbbf24;">Родитель:</span> <strong>${parentCount} из 10 (${parentPct}%)</strong>`;
+    document.getElementById('scoreAdult').innerHTML = `<span style="color:#34d399;">Взрослый:</span> <strong>${adultCount} из 10 (${adultPct}%)</strong>`;
+    document.getElementById('scoreChild').innerHTML = `<span style="color:#c084fc;">Ребёнок:</span> <strong>${childCount} из 10 (${childPct}%)</strong>`;
   }
 
   function updateClock() {
