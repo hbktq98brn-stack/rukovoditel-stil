@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Транзактный анализ · Какой вы руководитель</title>
+  <style>
+    :root {
+      --bg-page: #080b14;
+      --bg-phone: #0d1117;
+      --bg-card: #161b24;
+      --bg-input: #1c2230;
+      --border: #252b38;
+      --border-focus: #4a5cff;
+      --text: #e2e5ec;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent: #8b5cf6;
+      --accent-glow: rgba(139, 92, 246, 0.25);
+      --green: #10b981;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --radius-sm: 8px;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --shadow-card: 0 2px 12px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.04);
+      --font: 'Segoe UI', 'Inter', system-ui, sans-serif;
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { height:100%; overflow:hidden; -webkit-tap-highlight-color:transparent; -webkit-text-size-adjust:100%; }
+    body {
+      font-family: var(--font);
+      background: var(--bg-page);
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 50% 100%, rgba(16,185,129,0.04) 0%, transparent 60%);
+      display: flex; align-items:center; justify-content:center;
+      min-height:100vh; min-height:100dvh; padding:8px; overflow:hidden;
+      user-select:none; -webkit-user-select:none; touch-action:manipulation;
+    }
+    .phone-container {
+      width:100%; max-width:400px; height:92vh; height:92dvh; max-height:870px;
+      background: var(--bg-phone); border-radius: var(--radius-xl);
+      display:flex; flex-direction:column; overflow:hidden; position:relative;
+      box-shadow: 0 0 0 2px var(--border), 0 20px 60px rgba(0,0,0,0.55), 0 0 80px rgba(139,92,246,0.08);
+    }
+    .status-bar { display:flex; align-items:center; justify-content:space-between; padding:10px 18px 6px; font-size:11px; color:var(--text-muted); letter-spacing:0.3px; flex-shrink:0; }
+    .status-bar .time { font-weight:600; color:var(--text-secondary); }
+    .app-header { flex-shrink:0; padding:8px 16px 14px; text-align:center; border-bottom:1px solid var(--border); background:linear-gradient(180deg, var(--bg-phone) 60%, rgba(13,17,23,0.95) 100%); }
+    .app-header .brand { display:inline-block; font-size:18px; font-weight:800; letter-spacing:0.6px; text-decoration:none; color:#fff; background:linear-gradient(135deg,#c084fc,#8b5cf6,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .app-header .subtitle { font-size:11px; color: #cbd5e1; letter-spacing:1.2px; text-transform:uppercase; margin-top:2px; }
+    .scroll-content { flex:1; overflow-y:auto; padding:8px 12px 20px; scroll-behavior:smooth; }
+    .page { display:none; animation:fadeSlideIn 0.2s ease; }
+    .page.active { display:block; }
+    @keyframes fadeSlideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .block-card { background:var(--bg-card); border-radius:var(--radius-lg); margin-bottom:10px; padding:16px; border:1px solid var(--border); box-shadow:var(--shadow-card); position:relative; }
+    .block-title { color: white; font-weight:700; font-size:15px; margin-bottom:6px; }
+    .block-subtitle { color: #ffffff; font-size:11px; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:12px; }
+    .block-text { color: var(--text); font-size:13px; line-height:1.6; margin-bottom:12px; }
+    .block-text p { margin-bottom:8px; }
+    .progress { font-size:12px; color:var(--text-muted); margin-bottom:8px; }
+    .question-text { font-size:15px; color:var(--text); margin-bottom:20px; font-weight:500; }
+    .options { display:flex; flex-direction:column; gap:10px; }
+    .option-btn { padding:14px 12px; border-radius:var(--radius-sm); background:var(--bg-input); border:1.5px solid var(--border); color:var(--text); font-size:13px; cursor:pointer; transition:var(--transition); text-align:left; }
+    .option-btn:hover, .option-btn:active { border-color:var(--accent); background:#1e2432; }
+    .option-btn.selected { border-color:var(--accent); background:rgba(139,92,246,0.15); color:white; }
+    .bottom-nav { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:10px 16px 12px; border-top:1px solid var(--border); background:var(--bg-phone); gap:10px; z-index:5; }
+    .nav-btn { flex:1; padding:10px 16px; border-radius:30px; font-weight:700; font-size:13px; letter-spacing:0.4px; border:none; cursor:pointer; transition:var(--transition); background:var(--bg-card); color:var(--text-secondary); border:1.5px solid var(--border); outline:none; }
+    .nav-btn:active { transform:scale(0.96); background:#1e2430; }
+    .nav-btn.primary { background:var(--accent); color:white; border-color:var(--accent); box-shadow:0 4px 12px rgba(139,92,246,0.3); }
+    .nav-btn:disabled { opacity:0.3; pointer-events:none; }
+    .result-card { background:linear-gradient(145deg,#1a1f2e 0%,#121722 100%); border:2px solid #2a3050; border-radius:var(--radius-lg); padding:18px 16px; margin-top:6px; box-shadow:0 0 24px rgba(139,92,246,0.2); }
+    .result-title { font-size:20px; font-weight:800; color:white; margin-bottom:8px; }
+    .result-badge { display:inline-block; padding:6px 16px; border-radius:20px; font-weight:700; font-size:14px; margin-bottom:12px; }
+    .badge-parent { background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #f59e0b; }
+    .badge-adult { background:rgba(16,185,129,0.2); color:#34d399; border:1px solid #10b981; }
+    .badge-child { background:rgba(139,92,246,0.2); color:#c084fc; border:1px solid #8b5cf6; }
+    .result-description { font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:12px; }
+    .score-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
+    .page-footer-line { text-align:center; padding:8px 0 16px; font-size:10px; color:var(--text-muted); }
+    .page-footer-line a { color:#c084fc; text-decoration:none; font-weight:600; }
+    .description-section { margin-bottom:16px; }
+  </style>
+</head>
+<body>
+<div class="phone-container">
+  <div class="status-bar">
+    <span class="time" id="statusTime">9:41</span>
+    <span class="status-icons"><span class="status-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);"></span> <span>●●●●○</span></span>
+  </div>
+  <div class="app-header">
+    <a href="https://max.ru/alproailife" target="_blank" rel="noopener" class="brand">ALPROAILIFE</a>
+    <div class="subtitle">транзактный анализ · руководитель</div>
+  </div>
+
+  <div class="scroll-content" id="scrollContent">
+    <!-- Стартовая страница с описанием методики -->
+    <div class="page active" id="pageStart">
+      <div class="block-card">
+        <div class="block-title">🧠 Транзактный анализ: какой вы руководитель?</div>
+        <div class="block-subtitle">Родитель, Взрослый, Ребёнок: кто вы?</div>
+        <div class="description-section">
+          <p class="block-text">
+            В середине прошлого века американский психиатр Эрик Берн подарил миру теорию личности, которая простым языком описывает структуру наших эго-состояний.
+          </p>
+          <p class="block-text">
+            <strong>Родитель</strong> — поведение, мысли и чувства, скопированные у родителей или парентальных фигур. Это контроль, забота, критика или опека.
+          </p>
+          <p class="block-text">
+            <strong>Взрослый</strong> — непосредственная реакция на происходящее здесь-и-сейчас. Рациональность, анализ, объективность.
+          </p>
+          <p class="block-text">
+            <strong>Ребёнок</strong> — поведение, мысли и чувства из более раннего возраста. Спонтанность, эмоции, творчество или бунт.
+          </p>
+          <p class="block-text">
+            В роли руководителя мы неосознанно переключаемся между этими состояниями. Наш тест из 10 вопросов поможет определить, какое эго-состояние доминирует в вашем управленческом стиле.
+          </p>
+        </div>
+      </div>
+      <button class="nav-btn primary" onclick="startTest()">Начать тест</button>
+      <div class="page-footer-line">
+        <a href="https://max.ru/alproailife" target="_blank">ALPROAILIFE</a> · Alexey's Career Notes 🧢 AI & Tech
+      </div>
+    </div>
+
+    <!-- Страница вопроса (динамическая) -->
+    <div class="page" id="pageQuestion">
+      <div class="block-card">
+        <div class="progress" id="progressText">Вопрос 1 из 10</div>
+        <div class="question-text" id="questionPrompt">Загрузка...</div>
+        <div class="options" id="optionsContainer"></div>
+      </div>
+    </div>
+
+    <!-- Страница результатов -->
+    <div class="page" id="pageResult">
+      <div class="result-card">
+        <div class="result-title" id="resultTitle"></div>
+        <div id="resultBadge"></div>
+        <div class="result-description" id="resultDescription"></div>
+        <div class="score-row" id="scoreParent"></div>
+        <div class="score-row" id="scoreAdult"></div>
+        <div class="score-row" id="scoreChild"></div>
+      </div>
+      <button class="nav-btn primary" onclick="location.reload()" style="margin-top:12px;">Пройти заново</button>
+      <div class="page-footer-line">
+        <a href="https://max.ru/alproailife" target="_blank">ALPROAILIFE</a> · Alexey's Career Notes 🧢 AI & Tech
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav" id="bottomNav" style="display:none;">
+    <button class="nav-btn" id="prevBtn" onclick="prevQuestion()" style="display:none;">← Назад</button>
+    <button class="nav-btn primary" id="nextBtn" onclick="nextQuestion()">Далее →</button>
+  </div>
+</div>
+
+<script>
+  // Вопросы и варианты ответов
+  const questions = [
+    {
+      text: "Когда сотрудник допускает ошибку, я чаще всего...",
+      options: [
+        { text: "Критикую и указываю, как надо было сделать.", type: "parent" },
+        { text: "Спокойно разбираю причины и вместе ищем решение.", type: "adult" },
+        { text: "Расстраиваюсь, могу накричать или замкнуться.", type: "child" }
+      ]
+    },
+    {
+      text: "Принимая важное решение, я...",
+      options: [
+        { text: "Опираюсь на свой опыт и правила.", type: "parent" },
+        { text: "Анализирую факты и текущую ситуацию.", type: "adult" },
+        { text: "Доверяю интуиции и настроению.", type: "child" }
+      ]
+    },
+    {
+      text: "В конфликтной ситуации я...",
+      options: [
+        { text: "Занимаю авторитарную позицию, требую подчинения.", type: "parent" },
+        { text: "Стараюсь понять все стороны и найти компромисс.", type: "adult" },
+        { text: "Могу обидеться или вспылить.", type: "child" }
+      ]
+    },
+    {
+      text: "Мои сотрудники сказали бы, что я...",
+      options: [
+        { text: "Строгий, но справедливый, люблю поучать.", type: "parent" },
+        { text: "Рациональный и объективный.", type: "adult" },
+        { text: "Эмоциональный, бываю непредсказуемым.", type: "child" }
+      ]
+    },
+    {
+      text: "Когда нужно мотивировать команду, я...",
+      options: [
+        { text: "Привожу примеры из своего опыта, ставлю высокие стандарты.", type: "parent" },
+        { text: "Объясняю цели и важность работы, даю четкие инструкции.", type: "adult" },
+        { text: "Заряжаю энергией, шучу, создаю азарт.", type: "child" }
+      ]
+    },
+    {
+      text: "В неопределенной ситуации я склонен...",
+      options: [
+        { text: "Действовать по проверенным схемам.", type: "parent" },
+        { text: "Собирать информацию и взвешенно принимать решение.", type: "adult" },
+        { text: "Импульсивно пробовать новое, рисковать.", type: "child" }
+      ]
+    },
+    {
+      text: "Отношения с коллективом я строю на основе...",
+      options: [
+        { text: "Иерархии и уважения к статусу.", type: "parent" },
+        { text: "Взаимного профессионализма и доверия.", type: "adult" },
+        { text: "Эмоциональной близости, неформального общения.", type: "child" }
+      ]
+    },
+    {
+      text: "Когда я слышу критику в свой адрес, я...",
+      options: [
+        { text: "Защищаю свою позицию, считаю, что я прав.", type: "parent" },
+        { text: "Анализирую, есть ли в ней рациональное зерно.", type: "adult" },
+        { text: "Обижаюсь или остро реагирую.", type: "child" }
+      ]
+    },
+    {
+      text: "В стрессовой ситуации я...",
+      options: [
+        { text: "Становлюсь более жестким и требовательным.", type: "parent" },
+        { text: "Сохраняю спокойствие и ищу выход.", type: "adult" },
+        { text: "Могу растеряться или сорваться на других.", type: "child" }
+      ]
+    },
+    {
+      text: "Мой стиль руководства можно описать как...",
+      options: [
+        { text: "Наставнический, контролирующий.", type: "parent" },
+        { text: "Партнерский, ориентированный на результат.", type: "adult" },
+        { text: "Вдохновляющий, свободный, иногда хаотичный.", type: "child" }
+      ]
+    }
+  ];
+
+  let currentQuestion = 0;
+  let answers = new Array(questions.length).fill(null); // хранит type ('parent','adult','child')
+  let selectedOption = null;
+
+  function startTest() {
+    currentQuestion = 0;
+    answers = new Array(questions.length).fill(null);
+    showPage('question');
+    document.getElementById('bottomNav').style.display = 'flex';
+    renderQuestion();
+  }
+
+  function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page' + pageId.charAt(0).toUpperCase() + pageId.slice(1)).classList.add('active');
+    document.getElementById('scrollContent').scrollTop = 0;
+  }
+
+  function renderQuestion() {
+    if (currentQuestion >= questions.length) {
+      finishTest();
+      return;
+    }
+    const q = questions[currentQuestion];
+    document.getElementById('progressText').textContent = `Вопрос ${currentQuestion+1} из ${questions.length}`;
+    document.getElementById('questionPrompt').textContent = q.text;
+    const optionsContainer = document.getElementById('optionsContainer');
+    optionsContainer.innerHTML = q.options.map((opt, idx) => `
+      <button class="option-btn ${answers[currentQuestion] === opt.type ? 'selected' : ''}" onclick="selectOption('${opt.type}', this)">${opt.text}</button>
+    `).join('');
+    selectedOption = answers[currentQuestion];
+    updateNavButtons();
+  }
+
+  function selectOption(type, btn) {
+    answers[currentQuestion] = type;
+    // Обновить выделение
+    const container = document.getElementById('optionsContainer');
+    container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedOption = type;
+  }
+
+  function updateNavButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    prevBtn.style.display = currentQuestion === 0 ? 'none' : 'inline-block';
+    nextBtn.textContent = currentQuestion === questions.length-1 ? 'Завершить' : 'Далее →';
+  }
+
+  function prevQuestion() {
+    if (currentQuestion > 0) {
+      currentQuestion--;
+      renderQuestion();
+    }
+  }
+
+  function nextQuestion() {
+    if (!answers[currentQuestion]) {
+      alert('Пожалуйста, выберите один из вариантов ответа.');
+      return;
+    }
+    if (currentQuestion < questions.length - 1) {
+      currentQuestion++;
+      renderQuestion();
+    } else {
+      finishTest();
+    }
+  }
+
+  function finishTest() {
+    document.getElementById('bottomNav').style.display = 'none';
+    showPage('result');
+    // Подсчет баллов
+    let parentCount = 0, adultCount = 0, childCount = 0;
+    answers.forEach(ans => {
+      if (ans === 'parent') parentCount++;
+      else if (ans === 'adult') adultCount++;
+      else if (ans === 'child') childCount++;
+    });
+
+    // Определение доминирующего типа
+    let dominantType = '';
+    const maxCount = Math.max(parentCount, adultCount, childCount);
+    if (maxCount === parentCount && maxCount === adultCount) dominantType = 'adult'; // при равенстве отдаем взрослому
+    else if (maxCount === parentCount && maxCount === childCount) dominantType = 'adult';
+    else if (maxCount === adultCount && maxCount === childCount) dominantType = 'adult';
+    else if (maxCount === parentCount) dominantType = 'parent';
+    else if (maxCount === adultCount) dominantType = 'adult';
+    else if (maxCount === childCount) dominantType = 'child';
+
+    // Отображение результата
+    const titles = {
+      parent: 'Вы — Руководитель-Родитель',
+      adult: 'Вы — Руководитель-Взрослый',
+      child: 'Вы — Руководитель-Ребёнок'
+    };
+    const descriptions = {
+      parent: 'Вы склонны занимать наставническую или контролирующую позицию. Ваш стиль управления опирается на опыт, правила и иерархию. Это даёт стабильность, но иногда может подавлять инициативу сотрудников. Рекомендуется развивать гибкость и чаще включать "Взрослого" для анализа реальных потребностей команды.',
+      adult: 'Вы подходите к управлению рационально и объективно. Ваш стиль — партнёрство и анализ ситуации здесь-и-сейчас. Вы умеете слушать, взвешивать факты и принимать взвешенные решения. Это наиболее эффективный стиль, но не забывайте иногда проявлять заботу (Родитель) и spontanность (Ребёнок) для создания тёплой атмосферы.',
+      child: 'Вы эмоциональны, энергичны и часто действуете по вдохновению. Ваш стиль может быть очень мотивирующим и творческим, однако иногда ему не хватает последовательности и структуры. Постарайтесь развивать "Взрослого" для стратегического планирования и контроля, сохраняя свою искренность и энергию.'
+    };
+    const badgeClasses = {
+      parent: 'badge-parent',
+      adult: 'badge-adult',
+      child: 'badge-child'
+    };
+    document.getElementById('resultTitle').textContent = titles[dominantType];
+    document.getElementById('resultBadge').innerHTML = `<span class="result-badge ${badgeClasses[dominantType]}">${dominantType === 'parent' ? 'Родитель' : dominantType === 'adult' ? 'Взрослый' : 'Ребёнок'}</span>`;
+    document.getElementById('resultDescription').textContent = descriptions[dominantType];
+    document.getElementById('scoreParent').innerHTML = `<span style="color:#fbbf24;">Родитель:</span> <strong>${parentCount}</strong> из 10`;
+    document.getElementById('scoreAdult').innerHTML = `<span style="color:#34d399;">Взрослый:</span> <strong>${adultCount}</strong> из 10`;
+    document.getElementById('scoreChild').innerHTML = `<span style="color:#c084fc;">Ребёнок:</span> <strong>${childCount}</strong> из 10`;
+  }
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('statusTime').textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  document.getElementById('prevBtn').addEventListener('click', prevQuestion);
+  document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+</script>
+</body>
+</html>
